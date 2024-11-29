@@ -1,93 +1,118 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI; // UI ê´€ë ¨ ë„¤ì„ìŠ¤í˜ì´ìŠ¤ ì¶”ê°€
 
 public class EmotionManager : MonoBehaviour
 {
-    // Emotion Å¬·¡½º Á¤ÀÇ
+    // Emotion í´ë˜ìŠ¤ ì •ì˜
     [Serializable]
     public class Emotion
     {
-        public string EmotionType; // °¨Á¤ À¯Çü (¿¹: Çàº¹, ½½ÇÄ µî)
-        public string Description; // °¨Á¤¿¡ ´ëÇÑ ¼³¸í
-        public int Intensity; // °¨Á¤ÀÇ °­µµ
-        public DateTime RecordedAt; // °¨Á¤ÀÌ ±â·ÏµÈ ½Ã°£
+        public string EmotionType; // ê°ì • ìœ í˜• (ì˜ˆ: í–‰ë³µ, ìŠ¬í”” ë“±)
+        public string Description; // ê°ì •ì— ëŒ€í•œ ì„¤ëª…
+        public DateTime RecordedAt; // ê°ì •ì´ ê¸°ë¡ëœ ì‹œê°„
 
-        public Emotion(string type, string description, int intensity)
+        public Emotion(string type, string description)
         {
             EmotionType = type;
             Description = description;
-            Intensity = intensity;
             RecordedAt = DateTime.Now;
         }
     }
 
-    // ¼±ÅÃ °¡´ÉÇÑ °¨Á¤ ¸ñ·Ï (°íÁ¤µÈ °ª)
-    private readonly List<string> allowedEmotions = new List<string> { "Joy", "Happy", "Sad", "Anger", "Anxiety", "Calm", "Lethargic" };
+    // ì„ íƒ ê°€ëŠ¥í•œ ê°ì • ëª©ë¡ (ê³ ì •ëœ ê°’)
+    private readonly List<string> allowedEmotions = new List<string> { "Happiness", "Calmness", "Anxiety", "Sadness", "Anger", "Fatigue" };
 
-    // °¨Á¤ µ¥ÀÌÅÍ¸¦ ÀúÀåÇÒ ¸®½ºÆ®
+    // ê°ì • ë°ì´í„°ë¥¼ ì €ì¥í•  ë¦¬ìŠ¤íŠ¸
     private List<Emotion> emotionList = new List<Emotion>();
 
-    // °¨Á¤ µ¥ÀÌÅÍ¸¦ Ãß°¡ÇÏ´Â ¸Ş¼­µå
-    public void AddEmotion(string type, string description, int intensity)
+    // ê°ì • ë°ì´í„°ë¥¼ ì¶”ê°€í•˜ëŠ” ë©”ì„œë“œ
+    public void AddEmotion(string type, string description)
     {
         if (!allowedEmotions.Contains(type))
         {
-            Debug.LogWarning($"'{type}'´Â À¯È¿ÇÏÁö ¾ÊÀº °¨Á¤ À¯ÇüÀÔ´Ï´Ù.");
+            Debug.LogWarning($"'{type}'ëŠ” ìœ íš¨í•˜ì§€ ì•Šì€ ê°ì • ìœ í˜•ì…ë‹ˆë‹¤.");
             return;
         }
 
-        if (intensity < 1 || intensity > 10)
-        {
-            Debug.LogWarning("°¨Á¤ °­µµ´Â 1¿¡¼­ 10 »çÀÌ¿©¾ß ÇÕ´Ï´Ù.");
-            return;
-        }
-
-        Emotion newEmotion = new Emotion(type, description, intensity);
+        Emotion newEmotion = new Emotion(type, description);
         emotionList.Add(newEmotion);
-        Debug.Log($"°¨Á¤ Ãß°¡µÊ: {type}, {description}, °­µµ: {intensity}");
+        Debug.Log($"ê°ì • ì¶”ê°€ë¨: {type}, {description}");
     }
 
-    // ÀúÀåµÈ °¨Á¤ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÏ´Â ¸Ş¼­µå
+    // ì €ì¥ëœ ê°ì • ë°ì´í„°ë¥¼ ë°˜í™˜í•˜ëŠ” ë©”ì„œë“œ
     public List<Emotion> GetEmotions()
     {
         return emotionList;
     }
 
-    // Æ¯Á¤ °¨Á¤À» °Ë»öÇÏ´Â ¸Ş¼­µå
+    // íŠ¹ì • ê°ì •ì„ ê²€ìƒ‰í•˜ëŠ” ë©”ì„œë“œ
     public List<Emotion> SearchEmotions(string type)
     {
         if (string.IsNullOrEmpty(type) || !allowedEmotions.Contains(type))
         {
-            Debug.LogWarning("°Ë»öÇÒ °¨Á¤ À¯ÇüÀÌ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù.");
+            Debug.LogWarning("ê²€ìƒ‰í•  ê°ì • ìœ í˜•ì´ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
             return new List<Emotion>();
         }
 
         List<Emotion> result = emotionList.FindAll(e => e.EmotionType.Equals(type, StringComparison.OrdinalIgnoreCase));
-        Debug.Log($"{result.Count}°³ÀÇ °¨Á¤ÀÌ '{type}' À¯ÇüÀ¸·Î °Ë»öµÊ.");
+        Debug.Log($"{result.Count}ê°œì˜ ê°ì •ì´ '{type}' ìœ í˜•ìœ¼ë¡œ ê²€ìƒ‰ë¨.");
         return result;
     }
 
-    // µğ¹ö±ë¿ë: ¸ğµç °¨Á¤ µ¥ÀÌÅÍ¸¦ Ãâ·ÂÇÏ´Â ¸Ş¼­µå
+    // ë””ë²„ê¹…ìš©: ëª¨ë“  ê°ì • ë°ì´í„°ë¥¼ ì¶œë ¥í•˜ëŠ” ë©”ì„œë“œ
     public void PrintAllEmotions()
     {
-        Debug.Log("ÇöÀç ÀúÀåµÈ °¨Á¤ ¸ñ·Ï:");
+        Debug.Log("í˜„ì¬ ì €ì¥ëœ ê°ì • ëª©ë¡:");
         foreach (var emotion in emotionList)
         {
-            Debug.Log($"- {emotion.EmotionType}: {emotion.Description} (°­µµ: {emotion.Intensity}, ±â·Ï ½Ã°£: {emotion.RecordedAt})");
+            Debug.Log($"- {emotion.EmotionType}: {emotion.Description} (ê¸°ë¡ ì‹œê°„: {emotion.RecordedAt})");
         }
     }
-    void Start()
+
+    // UI ë²„íŠ¼ì„ ìœ„í•œ ë©”ì„œë“œ
+    public void OnEmotionButtonClick(string emotionType)
     {
-        // EmotionManager ½ºÅ©¸³Æ®¸¦ ÅëÇØ °¨Á¤ µ¥ÀÌÅÍ¸¦ Ãß°¡
-        EmotionManager manager = GetComponent<EmotionManager>();
+        // ê°ì •ì— ë§ëŠ” ì„¤ëª…ì„ ì¶”ê°€
+        string description = emotionType switch
+        {
+            "Happiness" => "ê°ì • ì„ íƒ : í–‰ë³µ",
+            "Calmness" => "ê°ì • ì„ íƒ : í‰ì˜¨",
+            "Anxiety" => "ê°ì • ì„ íƒ : ë¶ˆì•ˆ",
+            "Sadness" => "ê°ì • ì„ íƒ : ìŠ¬í””",
+            "Anger" => "ê°ì • ì„ íƒ : ë¶„ë…¸",
+            "Fatigue" => "ê°ì • ì„ íƒ : ë¬´ê¸°ë ¥",
+            _ => "ì•Œ ìˆ˜ ì—†ëŠ” ê°ì •"
+        };
 
-        // °¨Á¤ µ¥ÀÌÅÍ¸¦ Ãß°¡ (¿¹: Joy, ½½ÇÄ)
-        manager.AddEmotion("Joy", "±â»İÀ» ´À³§´Ï´Ù.", 5);
-        manager.AddEmotion("Sad", "½½ÇÄÀ» ´À³§´Ï´Ù.", 8);
-
-        // ÀúÀåµÈ ¸ğµç °¨Á¤À» µğ¹ö±× ·Î±×¿¡ Ãâ·Â
-        manager.PrintAllEmotions();
+        // ê°ì • ì¶”ê°€
+        AddEmotion(emotionType, description);
+        
+        // ì €ì¥ëœ ëª¨ë“  ê°ì •ì„ ì¶œë ¥
+        PrintAllEmotions();
     }
 
+    void Start()
+    {
+        // ê°ì • ë²„íŠ¼ê³¼ ê°ì • ìœ í˜•ì„ ë§¤í•‘í•œ ë”•ì…”ë„ˆë¦¬
+        Dictionary<string, string> emotionButtonMap = new Dictionary<string, string>
+        {
+            { "HappinessButton", "Happiness" },
+            { "CalmnessButton", "Calmness" },
+            { "AnxietyButton", "Anxiety" },
+            { "SadnessButton", "Sadness" },
+            { "AngerButton", "Anger" },
+            { "FatigueButton", "Fatigue" }
+        };
+
+        // ê° ë²„íŠ¼ì— í•´ë‹¹í•˜ëŠ” ê°ì • í´ë¦­ ì´ë²¤íŠ¸ ì—°ê²°
+        foreach (var entry in emotionButtonMap)
+        {
+            Button button = GameObject.Find(entry.Key).GetComponent<Button>();
+            string emotionType = entry.Value;
+
+            button.onClick.AddListener(() => OnEmotionButtonClick(emotionType));
+        }
+    }
 }
