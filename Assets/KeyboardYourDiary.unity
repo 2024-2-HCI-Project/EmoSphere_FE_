@@ -1601,6 +1601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 303a70df1edaa384e9f974639eabf589, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sceneToLoad: KeepYourDiary
 --- !u!1 &2136629649
 GameObject:
   m_ObjectHideFlags: 0

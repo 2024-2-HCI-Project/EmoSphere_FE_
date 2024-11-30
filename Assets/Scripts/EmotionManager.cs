@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // UI 관련 네임스페이스 추가
+using UnityEngine.SceneManagement; // Scene 전환 관련 네임스페이스 추가
 
 public class EmotionManager : MonoBehaviour
 {
@@ -91,6 +92,23 @@ public class EmotionManager : MonoBehaviour
         
         // 저장된 모든 감정을 출력
         PrintAllEmotions();
+
+        // 다음 화면으로 전환
+        LoadNextScene();
+    }
+
+    // Scene 전환 메서드
+    private void LoadNextScene()
+    {
+        string nextSceneName = "KeepYourDiary"; // 전환할 Scene 이름 설정
+        if (SceneManager.GetSceneByName(nextSceneName) != null)
+        {
+            SceneManager.LoadScene(nextSceneName);
+        }
+        else
+        {
+            Debug.LogWarning($"'{nextSceneName}' Scene을 찾을 수 없습니다. Build Settings에서 추가했는지 확인하세요.");
+        }
     }
 
     void Start()

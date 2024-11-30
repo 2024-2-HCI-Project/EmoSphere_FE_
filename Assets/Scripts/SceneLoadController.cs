@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class BackButtonController : MonoBehaviour
+public class SceneLoadController : MonoBehaviour
 {
     public string sceneToLoad;
 
-    public void OnBackButtonClick()
+    public void OnButtonClick()
     {
         if (!string.IsNullOrEmpty(sceneToLoad))
         {

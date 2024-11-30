@@ -5,6 +5,6 @@ public class StartButtonScript : MonoBehaviour
 {
     public void LoadCreateNewAccountScene()
     {
-        SceneManager.LoadScene("CreateNewAccountScene");
+        SceneManager.LoadScene("CreateNewAccount");
     }
 }
