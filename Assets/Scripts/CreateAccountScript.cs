@@ -4,6 +4,12 @@ using UnityEngine.SceneManagement; // 씬 전환을 위한 네임스페이스 �
 
 public class CreateAccountScript : MonoBehaviour
 {
+    private APIManager apiManager;
+
+    private void Start()
+    {
+    apiManager = new APIManager(); // APIManager 초기화
+    }
     public TMP_InputField nameInputField;
     public TMP_InputField idInputField;
     public TMP_InputField passwordInputField;
@@ -45,10 +51,25 @@ public class CreateAccountScript : MonoBehaviour
         }
 
         Account newAccount = new Account(name, id, password);
+        
+        string requestData = $"{{\"name\": \"{newAccount.Name}\", \"id\": \"{newAccount.ID}\", \"password\": \"{newAccount.Password}\"}}";
 
+        Debug.Log("Request Data: " + requestData); // 요청 데이터 디버깅
+
+        StartCoroutine(apiManager.PostRequest(
+            "http://127.0.0.1:8000/api/users/signup/",  // Django API URL
+            requestData,
+            onSuccess: response =>
+            {
+                Debug.Log("Account created successfully: " + response);
+            },
+            onError: error =>
+            {
+                Debug.LogError("Failed to create account: " + error);
+            }
+        ));
         Debug.Log($"Account Created:\nName: {newAccount.Name}\nID: {newAccount.ID}\nPassword: {newAccount.Password}");
 
-        // DB에 계정 저장 로직 추가 필요
 
         // 씬 전환
         if (!string.IsNullOrEmpty(nextSceneName))
