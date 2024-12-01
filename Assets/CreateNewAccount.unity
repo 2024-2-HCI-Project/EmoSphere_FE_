@@ -726,6 +726,7 @@ MonoBehaviour:
   idInputField: {fileID: 627807316}
   passwordInputField: {fileID: 1841598033}
   checkPasswordInputField: {fileID: 837311715}
+  nextSceneName: Login
 --- !u!1 &536706128
 GameObject:
   m_ObjectHideFlags: 0

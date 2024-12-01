@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement; // 씬 전환을 위한 네임스페이스 추가
 
 public class CreateAccountScript : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class CreateAccountScript : MonoBehaviour
     public TMP_InputField idInputField;
     public TMP_InputField passwordInputField;
     public TMP_InputField checkPasswordInputField;
+
+    public string nextSceneName; // 인스펙터에서 설정할 씬 이름
 
     public struct Account
     {
@@ -45,6 +48,16 @@ public class CreateAccountScript : MonoBehaviour
 
         Debug.Log($"Account Created:\nName: {newAccount.Name}\nID: {newAccount.ID}\nPassword: {newAccount.Password}");
 
-        // Nedd to add Save at DB Logic
+        // DB에 계정 저장 로직 추가 필요
+
+        // 씬 전환
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            SceneManager.LoadScene(nextSceneName);
+        }
+        else
+        {
+            Debug.LogWarning("Next scene name is not set in the Inspector!");
+        }
     }
 }
