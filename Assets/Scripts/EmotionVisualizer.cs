@@ -1,23 +1,23 @@
+using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class EmotionVisualizer : MonoBehaviour
 {
-    [Serializable]
+    [System.Serializable]
     public class EmotionObject
     {
-        public GameObject ObjectPrefab; // °¨Á¤À» ½Ã°¢È­ÇÒ 3D ¿ÀºêÁ§Æ® ÇÁ¸®ÆÕ
-        public string EmotionType;      // °¨Á¤ À¯Çü
+        public GameObject ObjectPrefab; // ê°ì •ì„ ë‚˜íƒ€ë‚¼ 3D ì˜¤ë¸Œì íŠ¸ í”„ë¦¬íŒ¹
+        public string EmotionType;      // ê°ì • ìœ í˜•
     }
 
-    public List<EmotionObject> emotionPrefabs = new List<EmotionObject>(); // °¨Á¤ À¯Çüº° ¿ÀºêÁ§Æ® ÇÁ¸®ÆÕ ¸®½ºÆ®
-
-    private Dictionary<string, GameObject> emotionPrefabDict = new Dictionary<string, GameObject>(); // ºü¸¥ ÂüÁ¶¸¦ À§ÇÑ µñ¼Å³Ê¸®
+    public List<EmotionObject> emotionPrefabs = new List<EmotionObject>(); // ê°ì • í”„ë¦¬íŒ¹ ë¦¬ìŠ¤íŠ¸
+    private Dictionary<string, GameObject> emotionPrefabDict = new Dictionary<string, GameObject>(); // ê°ì • ìœ í˜• -> í”„ë¦¬íŒ¹ ë§¤í•‘
 
     void Start()
     {
-        // µñ¼Å³Ê¸®¿¡ °¨Á¤ À¯Çü°ú ÇÁ¸®ÆÕ ¸ÅÇÎ
+        // ê°ì • í”„ë¦¬íŒ¹ ë§¤í•‘ ìƒì„±
         foreach (var emotion in emotionPrefabs)
         {
             if (!emotionPrefabDict.ContainsKey(emotion.EmotionType))
@@ -25,36 +25,91 @@ public class EmotionVisualizer : MonoBehaviour
                 emotionPrefabDict[emotion.EmotionType] = emotion.ObjectPrefab;
             }
         }
+
+        // í…ŒìŠ¤íŠ¸ ë°ì´í„° ê°€ì ¸ì˜¤ê¸° ë° ì‹œê°í™”
+        FetchAndVisualizeEmotions();
     }
 
-    // °¨Á¤ À¯Çü¿¡ µû¸¥ 3D ¿ÀºêÁ§Æ®¸¦ »ı¼ºÇÏ´Â ¸Ş¼­µå
+    // ê°ì • ë°ì´í„°ë¥¼ ê¸°ë°˜ìœ¼ë¡œ 3D ì˜¤ë¸Œì íŠ¸ë¥¼ ìƒì„±í•˜ëŠ” ë©”ì„œë“œ
     public GameObject VisualizeEmotion(string emotionType, Vector3 position, float size, Color color)
     {
         if (!emotionPrefabDict.ContainsKey(emotionType))
         {
-            Debug.LogWarning($"'{emotionType}'´Â Áö¿øÇÏÁö ¾Ê´Â °¨Á¤ À¯ÇüÀÔ´Ï´Ù.");
+            Debug.LogWarning($"'{emotionType}'ëŠ” ì •ì˜ë˜ì§€ ì•Šì€ ê°ì • ìœ í˜•ì…ë‹ˆë‹¤.");
             return null;
         }
 
-        // ¿ÀºêÁ§Æ® »ı¼º
+        // í•´ë‹¹ ê°ì •ì˜ í”„ë¦¬íŒ¹ ê°€ì ¸ì˜¤ê¸°
         GameObject prefab = emotionPrefabDict[emotionType];
         GameObject instance = Instantiate(prefab, position, Quaternion.identity);
 
-        // ¿ÀºêÁ§Æ® Å©±â¿Í »ö»ó ¼³Á¤
+        // í¬ê¸°ì™€ ìƒ‰ìƒ ì„¤ì •
         instance.transform.localScale = Vector3.one * size;
-        var renderer = instance.GetComponent<Renderer>();
+        Renderer renderer = instance.GetComponent<Renderer>();
         if (renderer != null)
         {
             renderer.material.color = color;
         }
 
-        Debug.Log($"{emotionType} °¨Á¤ ¿ÀºêÁ§Æ® »ı¼º ¿Ï·á: À§Ä¡ {position}, Å©±â {size}, »ö»ó {color}");
+        Debug.Log($"{emotionType} ê°ì •ì„ ì‹œê°í™”: ìœ„ì¹˜ {position}, í¬ê¸° {size}, ìƒ‰ìƒ {color}");
         return instance;
     }
 
-    // µğ¹ö±ë¿ë: ÀÓÀÇÀÇ °¨Á¤ ¿ÀºêÁ§Æ®¸¦ »ı¼ºÇÏ´Â Å×½ºÆ® ¸Ş¼­µå
+    // APIì—ì„œ ê°ì • ë°ì´í„°ë¥¼ ê°€ì ¸ì™€ ì‹œê°í™”í•˜ëŠ” ë©”ì„œë“œ
+    public void FetchAndVisualizeEmotions()
+    {
+        StartCoroutine(GetRequest("http://127.0.0.1:8000/api/emotions/",
+            response =>
+            {
+                // JSON ë°ì´í„°ë¥¼ Emotion í´ë˜ìŠ¤ ë¦¬ìŠ¤íŠ¸ë¡œ ë³€í™˜
+                EmotionData[] emotions = JsonUtility.FromJson<EmotionDataWrapper>(response).data;
+
+                foreach (var emotion in emotions)
+                {
+                    // ê°ì • ì‹œê°í™”
+                    VisualizeEmotion(emotion.emotion_type, new Vector3(0, 1, 0), 1.0f, Color.green);
+                }
+            },
+            error => Debug.LogError("ê°ì • ë°ì´í„°ë¥¼ ê°€ì ¸ì˜¤ëŠ” ë° ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤: " + error)));
+    }
+
+    // API GET ìš”ì²­ì„ ë³´ë‚´ëŠ” ì½”ë£¨í‹´ ë©”ì„œë“œ
+    private IEnumerator GetRequest(string url, System.Action<string> onSuccess, System.Action<string> onError)
+    {
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(request.downloadHandler.text);
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
+    }
+
+    // í…ŒìŠ¤íŠ¸ìš© ê°ì • ì‹œê°í™”
     public void TestVisualizeEmotion()
     {
-        VisualizeEmotion("Joy", new Vector3(0, 1, 0), 1.5f, Color.yellow);
+        VisualizeEmotion("Happiness", new Vector3(0, 1, 0), 1.5f, Color.yellow);
+    }
+
+    // ê°ì • ë°ì´í„°ë¥¼ ë‚˜íƒ€ë‚´ëŠ” í´ë˜ìŠ¤ (API ì‘ë‹µìš©)
+    [System.Serializable]
+    public class EmotionData
+    {
+        public string emotion_type;
+        public string description;
+        public string input_mode;
+        public string timestamp;
+    }
+
+    [System.Serializable]
+    public class EmotionDataWrapper
+    {
+        public EmotionData[] data;
     }
 }

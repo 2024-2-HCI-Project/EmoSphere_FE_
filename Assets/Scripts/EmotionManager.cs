@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; // UI 관련 네임스페이스 추가
-using UnityEngine.SceneManagement; // Scene 전환 관련 네임스페이스 추가
+using UnityEngine.UI;
+using UnityEngine.Networking; // UnityWebRequest를 사용하기 위한 네임스페이스
+using UnityEngine.SceneManagement;
 
 public class EmotionManager : MonoBehaviour
 {
@@ -10,25 +12,30 @@ public class EmotionManager : MonoBehaviour
     [Serializable]
     public class Emotion
     {
-        public string EmotionType; // 감정 유형 (예: 행복, 슬픔 등)
-        public string Description; // 감정에 대한 설명
-        public DateTime RecordedAt; // 감정이 기록된 시간
+        public string EmotionType; // 감정 유형
+        public string Description; // 감정 설명
+        public string InputMode;   // 입력 방식 (예: text, voice)
+        public DateTime Timestamp; // 감정 기록 시간
 
-        public Emotion(string type, string description)
+        public Emotion(string type, string description, string inputMode)
         {
             EmotionType = type;
             Description = description;
-            RecordedAt = DateTime.Now;
+            InputMode = inputMode;
+            Timestamp = DateTime.Now;
         }
     }
 
-    // 선택 가능한 감정 목록 (고정된 값)
-    private readonly List<string> allowedEmotions = new List<string> { "Happiness", "Calmness", "Anxiety", "Sadness", "Anger", "Fatigue" };
+    // 선택 가능한 감정 목록
+    private readonly List<string> allowedEmotions = new List<string>
+    {
+        "Happiness", "Calmness", "Anxiety", "Sadness", "Anger", "Fatigue"
+    };
 
     // 감정 데이터를 저장할 리스트
     private List<Emotion> emotionList = new List<Emotion>();
 
-    // 감정 데이터를 추가하는 메서드
+    // 감정을 추가하고 API로 전송
     public void AddEmotion(string type, string description)
     {
         if (!allowedEmotions.Contains(type))
@@ -37,70 +44,59 @@ public class EmotionManager : MonoBehaviour
             return;
         }
 
-        Emotion newEmotion = new Emotion(type, description);
+        Emotion newEmotion = new Emotion(type, description, "text");
         emotionList.Add(newEmotion);
         Debug.Log($"감정 추가됨: {type}, {description}");
+
+        // API로 전송
+        OnEmotionSubmit(type, description, "text");
     }
 
-    // 저장된 감정 데이터를 반환하는 메서드
-    public List<Emotion> GetEmotions()
+    // API 호출 (POST)
+    private IEnumerator PostRequest(string url, string jsonData, Action<string> onSuccess, Action<string> onError)
     {
-        return emotionList;
-    }
-
-    // 특정 감정을 검색하는 메서드
-    public List<Emotion> SearchEmotions(string type)
-    {
-        if (string.IsNullOrEmpty(type) || !allowedEmotions.Contains(type))
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
         {
-            Debug.LogWarning("검색할 감정 유형이 유효하지 않습니다.");
-            return new List<Emotion>();
-        }
+            byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(jsonToSend);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
 
-        List<Emotion> result = emotionList.FindAll(e => e.EmotionType.Equals(type, StringComparison.OrdinalIgnoreCase));
-        Debug.Log($"{result.Count}개의 감정이 '{type}' 유형으로 검색됨.");
-        return result;
-    }
+            yield return request.SendWebRequest();
 
-    // 디버깅용: 모든 감정 데이터를 출력하는 메서드
-    public void PrintAllEmotions()
-    {
-        Debug.Log("현재 저장된 감정 목록:");
-        foreach (var emotion in emotionList)
-        {
-            Debug.Log($"- {emotion.EmotionType}: {emotion.Description} (기록 시간: {emotion.RecordedAt})");
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(request.downloadHandler.text);
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
         }
     }
 
-    // UI 버튼을 위한 메서드
-    public void OnEmotionButtonClick(string emotionType)
+    // 감정 전송 메서드
+    public void OnEmotionSubmit(string emotionType, string description, string inputMode)
     {
-        // 감정에 맞는 설명을 추가
-        string description = emotionType switch
-        {
-            "Happiness" => "감정 선택 : 행복",
-            "Calmness" => "감정 선택 : 평온",
-            "Anxiety" => "감정 선택 : 불안",
-            "Sadness" => "감정 선택 : 슬픔",
-            "Anger" => "감정 선택 : 분노",
-            "Fatigue" => "감정 선택 : 무기력",
-            _ => "알 수 없는 감정"
-        };
+        string jsonData = $"{{\"emotion_type\":\"{emotionType}\",\"description\":\"{description}\",\"input_mode\":\"{inputMode}\"}}";
+        string apiUrl = "http://127.0.0.1:8000/api/emotions/";
 
-        // 감정 추가
-        AddEmotion(emotionType, description);
-        
-        // 저장된 모든 감정을 출력
-        PrintAllEmotions();
-
-        // 다음 화면으로 전환
-        LoadNextScene();
+        StartCoroutine(PostRequest(apiUrl, jsonData,
+            response =>
+            {
+                Debug.Log("Emotion successfully saved: " + response);
+            },
+            error =>
+            {
+                Debug.LogError("Error saving emotion: " + error);
+            }
+        ));
     }
 
     // Scene 전환 메서드
     private void LoadNextScene()
     {
-        string nextSceneName = "KeepYourDiary"; // 전환할 Scene 이름 설정
+        string nextSceneName = "KeepYourDiary";
         if (SceneManager.GetSceneByName(nextSceneName) != null)
         {
             SceneManager.LoadScene(nextSceneName);
@@ -113,7 +109,7 @@ public class EmotionManager : MonoBehaviour
 
     void Start()
     {
-        // 감정 버튼과 감정 유형을 매핑한 딕셔너리
+        // 버튼 이벤트 설정
         Dictionary<string, string> emotionButtonMap = new Dictionary<string, string>
         {
             { "HappinessButton", "Happiness" },
@@ -124,7 +120,6 @@ public class EmotionManager : MonoBehaviour
             { "FatigueButton", "Fatigue" }
         };
 
-        // 각 버튼에 해당하는 감정 클릭 이벤트 연결
         foreach (var entry in emotionButtonMap)
         {
             Button button = GameObject.Find(entry.Key).GetComponent<Button>();
@@ -132,5 +127,12 @@ public class EmotionManager : MonoBehaviour
 
             button.onClick.AddListener(() => OnEmotionButtonClick(emotionType));
         }
+    }
+
+    public void OnEmotionButtonClick(string emotionType)
+    {
+        string description = $"{emotionType} 감정을 선택하셨습니다.";
+        AddEmotion(emotionType, description);
+        LoadNextScene();
     }
 }
